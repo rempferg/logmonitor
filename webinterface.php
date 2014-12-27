@@ -442,6 +442,12 @@
                     xmlhttp.send();
                 }
             }
+
+            function construct_regex(offender)
+            { 
+                offender = offender.replace(/([{}[\]()^$.|*+?\\])/g, "\\$1");
+                document.getElementById('regexnew').value = offender;
+            }
         </script>
     </head>
     <body onload="document.getElementById('regexnew').focus()">
@@ -533,7 +539,7 @@
 
                 while($offender = $offenders->fetch_assoc())
                 {
-                    echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"document.getElementById('regexnew').value = document.getElementById('line{$offender['id']}').innerText\">\n";
+                    echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
                     echo "<div id=\"seen{$offender['id']}\" class=\"seen\">{$offender['seen']}</div>\n";
                     echo "<div id=\"line{$offender['id']}\" class=\"line\">";
                     echo htmlspecialchars($offender['line']);
