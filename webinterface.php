@@ -321,7 +321,7 @@
                         }
                     }
 
-                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=" + logfile_id + "&save_rule=" + id + "&regex=" + regex_string + "&active=" + active;
+                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=" + logfile_id + "&save_rule=" + id + "&regex=" + encodeURIComponent(regex_string) + "&active=" + active;
                 xmlhttp.open("GET", url, true);
                 xmlhttp.send();
             }
@@ -368,7 +368,7 @@
                     var path = prompt('Enter logfile path');
 
                     if(path != null)
-                        window.location.href = "<?=$_SERVER['PHP_SELF']?>?add_logfile=" + path;
+                        window.location.href = "<?=$_SERVER['PHP_SELF']?>?add_logfile=" + encodeURIComponent(path);
                 }
                 else
                     window.location.href = "<?=$_SERVER['PHP_SELF']?>?logfile=" + choice;
@@ -396,7 +396,7 @@
                     var path = prompt('Enter new logfile path', text.slice(0, text.lastIndexOf(' ')));
 
                     if(path != null)
-                        window.location.href = "<?=$_SERVER['PHP_SELF']?>?logfile=" + value + "&edit_logfile_path=" + path;
+                        window.location.href = "<?=$_SERVER['PHP_SELF']?>?logfile=" + value + "&edit_logfile_path=" + encodeURIComponent(path);
                 }
             }
 
