@@ -456,9 +456,11 @@
                 end = regexnew.selectionEnd;
                 regex = regexnew.value;
 
-                regexnew.value = regex.substring(0, start) + '.{' + (end-start) + '}' + regex.substring(end);
-                regexnew.selectionStart = start + 1;
-                regexnew.selectionEnd = start + 1;
+                replacement = '.{' + (end-start) + '}';
+
+                regexnew.value = regex.substring(0, start) + replacement + regex.substring(end);
+                regexnew.selectionStart = start;
+                regexnew.selectionEnd = start + replacement.length;
             }
         </script>
     </head>
