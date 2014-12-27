@@ -23,13 +23,12 @@ poll_sleep = 5
 sync_sleep = 10
 error_sleep = 30
 
-
 #parameters chosen so that stationary priority becomes hits/24h
 priority_decay_time = 300
 priority_decay_factor = 0.996527778
 
 
-with open('.ht_dblogin', 'r') as fp:
+with open(os.path.dirname(__file__) + '/.ht_dblogin', 'r') as fp:
     db_login = [l.rstrip('\n') for l in fp.readlines()]
 
 logfile_fp = None
