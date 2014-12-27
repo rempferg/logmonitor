@@ -494,7 +494,7 @@
                 echo "<input id=\"regexnew\" class=\"regex\" type=\"text\" autocomplete=\"off\" value=\"\">";
                 echo "<input id=\"activenew\" class=\"active\" type=\"checkbox\" checked=\"checked\">";
                 echo "<input class=\"button\" type=\"submit\" value=\"try\">";
-                echo "<input id=\"savenew\" class=\"button\" type=\"reset\" value=\"save\" onclick=\"save_regex('new', document.getElementById('regexnew').value, document.getElementById('activenew').checked)\">";
+                echo "<input id=\"savenew\" class=\"button\" type=\"reset\" value=\"save\" onclick=\"save_regex('new', document.getElementById('regexnew').value, document.getElementById('activenew').checked)\" accesskey=\"S\">";
                 echo "<input class=\"button\" type=\"reset\" value=\"reset\" onclick=\"reset_regex('new')\">";
                 echo "</form>\n";
                 echo "</div>\n";
