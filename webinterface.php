@@ -448,6 +448,18 @@
                 offender = offender.replace(/([{}[\]()^$.|*+?\\])/g, "\\$1");
                 document.getElementById('regexnew').value = offender;
             }
+
+            function select_newregex()
+            {
+                regexnew = document.getElementById('regexnew');
+                start = regexnew.selectionStart;
+                end = regexnew.selectionEnd;
+                regex = regexnew.value;
+
+                regexnew.value = regex.substring(0, start) + '.{' + (end-start) + '}' + regex.substring(end);
+                regexnew.selectionStart = start + 1;
+                regexnew.selectionEnd = start + 1;
+            }
         </script>
     </head>
     <body onload="document.getElementById('regexnew').focus()">
@@ -497,7 +509,7 @@
 
                 echo "<div>\n";
                 echo "<form id=\"formnew\" onsubmit=\"return try_regex(document.getElementById('regexnew').value)\">\n";
-                echo "<input id=\"regexnew\" class=\"regex\" type=\"text\" autocomplete=\"off\" value=\"\">";
+                echo "<input id=\"regexnew\" class=\"regex\" type=\"text\" onselect=\"select_newregex()\" autocomplete=\"off\" value=\"\">";
                 echo "<input id=\"activenew\" class=\"active\" type=\"checkbox\" checked=\"checked\">";
                 echo "<input class=\"button\" type=\"submit\" value=\"try\">";
                 echo "<input id=\"savenew\" class=\"button\" type=\"reset\" value=\"save\" onclick=\"save_regex('new', document.getElementById('regexnew').value, document.getElementById('activenew').checked)\" accesskey=\"S\">";
