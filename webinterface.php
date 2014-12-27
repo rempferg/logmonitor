@@ -305,7 +305,7 @@
 
                                 rule_html = "<div style=\"clear:both\">\n";
                                 rule_html += "<form id=\"form" + rule_id + "\" onsubmit=\"return try_regex(document.getElementById('regex" + rule_id + "').value)\">\n";
-                                rule_html += "<input id=\"regex" + rule_id + "\" class=\"regex\" type=\"text\" oninput=\"this.style.backgroundColor = '#fcc'\" value=\"" + regex_string.replace('"', '&quot;') + "\">";
+                                rule_html += "<input id=\"regex" + rule_id + "\" class=\"regex\" type=\"text\" oninput=\"this.style.backgroundColor = '#fcc'\" value=\"" + regex_string.replace(/"/g, '&quot;') + "\">";
                                 rule_html += "<input id=\"active" + rule_id + "\" class=\"active\" type=\"checkbox\"" + checked + ">";
                                 rule_html += "<div class=\"priority\">0</div>\n";
                                 rule_html += "<div class=\"last_usage\"></div>\n";
