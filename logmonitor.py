@@ -14,7 +14,7 @@ import time
 import sys
 
 
-loglevel = 0 #0=all, 1=less
+loglevel = 1 #0=all, 1=less
 log_path = '/var/log/logmonitor.log'
 
 pidfile = '/var/run/logmonitor.pid'
@@ -184,7 +184,7 @@ class Logmonitor(threading.Thread):
                     log('[%d] Opening logfile %s' % (self.id, self.path))
                     self.log = open(self.path, 'r')
                 else:
-                    log('[%d] Logfile %s doesn\'t exist' % (self.id, self.path))
+                    log('[%d] Logfile %s doesn\'t exist' % (self.id, self.path), priority=1)
                     time.sleep(poll_sleep)
                     continue
 
@@ -199,7 +199,7 @@ class Logmonitor(threading.Thread):
                         self.log = open(self.path, 'r' )
                         continue
                 else:
-                    log('[%d] Logfile %s doesn\'t exist' % (self.id, self.path))
+                    log('[%d] Logfile %s doesn\'t exist' % (self.id, self.path), priority=1)
 
                 db_thread.commit()
                 time.sleep(poll_sleep)
