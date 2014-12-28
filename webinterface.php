@@ -498,7 +498,7 @@
                     echo "<div style=\"clear:both\">\n";
                     echo "<form id=\"form{$rule['id']}\" onsubmit=\"return try_regex(document.getElementById('regex{$rule['id']}').value)\">\n";
                     echo "<input id=\"regex{$rule['id']}\" class=\"regex\" type=\"text\" oninput=\"this.style.backgroundColor = '#fcc'\" autocomplete=\"off\" value=\"" . htmlspecialchars($rule['regex']) . "\">";
-                    echo "<input id=\"active{$rule['id']}\" class=\"active\" type=\"checkbox\"{$checked}>";
+                    echo "<input id=\"active{$rule['id']}\" class=\"active\" onchange=\"document.getElementById('regex{$rule['id']}').style.backgroundColor = '#fcc'\" type=\"checkbox\"{$checked}>";
                     echo "<div class=\"priority\">" . round($rule['priority'], 1) . "</div>\n";
                     echo "<div class=\"last_usage\">" . str_replace(' ', '<br>', $rule['last_usage']) . "</div>\n";
                     echo "<input class=\"button\" type=\"submit\" value=\"try\">";
