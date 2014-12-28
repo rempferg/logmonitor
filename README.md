@@ -15,6 +15,13 @@ Also contained is a webinterface script (written in PHP), to manage all the nece
 3. Place a copy of logmonitor.py and .ht_dblogin anywhere on your server
 4. Adapt the path in logmonitor.conf and store this file in /etc/init
 
+The file .ht_dblogin should contain the following four lines
+
+    mysql_host
+    mysql_user
+    mysql_password
+    mysql_database
+
 You can then use the usual upstart commands (as root)
 
     start logmonitor
