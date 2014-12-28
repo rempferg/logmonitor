@@ -13,7 +13,7 @@
     if(isset($_GET['save_rule']))
     {
         $_GET['active'] = (int) $_GET['active'];
-        $_GET['regex'] = addslashes(urldecode($_GET['regex']));
+        $_GET['regex'] = addslashes(rawurldecode($_GET['regex']));
         
         if($_GET['save_rule'] == 'new')
         {
@@ -49,7 +49,7 @@
 
     if(isset($_GET['add_logfile']))
     {
-        $_GET['add_logfile'] = urldecode($_GET['add_logfile']);
+        $_GET['add_logfile'] = rawurldecode($_GET['add_logfile']);
         $db->query("INSERT INTO logfiles(path, monitoring) values(\"{$_GET['add_logfile']}\", 1)");
         header("location: {$_SERVER['PHP_SELF']}?logfile={$db->insert_id}");
         die();
