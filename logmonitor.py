@@ -14,7 +14,7 @@ import time
 import sys
 
 
-loglevel = 0 #0=all
+loglevel = 0 #0=all, 1=less
 log_path = '/var/log/logmonitor.log'
 
 pidfile = '/var/run/logmonitor.pid'
@@ -29,6 +29,7 @@ priority_decay_factor = 0.996527778
 
 
 def sigterm_handler(_signo, _stack_frame):
+    log('[sig] Received SIGTERM', priority=1)
     sys.exit(0)
 
 signal.signal(signal.SIGTERM, sigterm_handler)
@@ -61,7 +62,7 @@ def log(message, priority=0):
                os.fstat(logfile_fp.fileno()).st_dev != os.stat(log_path).st_dev:
                 logfile_fp.close()
                 logfile_fp = open(log_path, 'a' )
-                print('Reopening %s after logrotation' % (log_path,), file=logfile_fp)
+                print('%s [log] Reopening %s after logrotation' % (time.strftime('%Y-%m-%d %H:%M:%S'), log_path), file=logfile_fp)
     
         print(message, file=logfile_fp)
         logfile_fp.flush()
@@ -156,6 +157,8 @@ class Logmonitor(threading.Thread):
         cur.close()
 
     def downscale_priority(self):
+        log('[%d] Downscaling rule priorities' % (self.id,))
+
         for rule in self.rules.iteritems():
             rule[1]['priority'] *= priority_decay_factor
             rule[1]['dirty'] = True
@@ -219,13 +222,19 @@ class Logmonitor(threading.Thread):
                             rule[1]['priority'] += 1.0
                             rule[1]['last_usage'] = datetime.datetime.now()
                             rule[1]['dirty'] = 1
-                            #print('[%d] Rule %d: priority %f, last_usage %s, dirty %d' % (self.id, rule[1]['id'], rule[1]['priority'], str(rule[1]['last_usage']), rule[1]['dirty'])) 
+                            
+                        #    if rule[1]['id'] == 43 and 'phpmyadmin' in line:
+                        #        log('[%d] MATCH rule %d: %s\n%s\n' % (self.id, rule[1]['id'], rule[1]['regex'], line))
+
                             match = True
                             break
+                        #else:
+                        #    if rule[1]['id'] == 43 and 'phpmyadmin' in line:
+                        #        log('[%d] MISMATCH rule %d: %s\n%s\n' % (self.id, rule[1]['id'], rule[1]['regex'], line))
 
                     if not match:
                         cur_thread = db_thread.cursor()
-                        cur_thread.execute('INSERT INTO offenders(logfile_id, line) values(%s, "%s")', (self.id, line))
+                        cur_thread.execute('INSERT INTO offenders(logfile_id, line) values(%s, %s)', (self.id, line))
                         cur_thread.close()
 
                 except Exception as e:
@@ -235,6 +244,9 @@ class Logmonitor(threading.Thread):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2 and sys.argv[1] == 'debug':
+        logfile_fp = sys.stderr
+
     reconnect = True
     monitors = {}
     last_downscaling = time.time()
