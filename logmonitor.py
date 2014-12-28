@@ -11,6 +11,7 @@ import signal
 import re
 import threading
 import time
+import traceback
 import sys
 
 
@@ -311,6 +312,7 @@ if __name__ == '__main__':
 
         except Exception as e:
             log('[main] Error: %s' % (str(e),), priority=1)
+            traceback.print_exc(file=logfile_fp)
             reconnect = True
             time.sleep(error_sleep)
 
