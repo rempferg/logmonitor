@@ -192,6 +192,12 @@
                 white-space:nowrap;
                 font-size:0.8em;
             }
+
+            pre
+            {
+                margin:0;
+                padding:0;
+            }
             
             @media only screen and (orientation: portrait)
             {
@@ -555,9 +561,9 @@
                 {
                     echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
                     echo "<div id=\"seen{$offender['id']}\" class=\"seen\">{$offender['seen']}</div>\n";
-                    echo "<div id=\"line{$offender['id']}\" class=\"line\">";
+                    echo "<div id=\"line{$offender['id']}\" class=\"line\"><pre>";
                     echo htmlspecialchars($offender['line']);
-                    echo "</div>\n";
+                    echo "</pre></div>\n";
                     echo "</div></a>\n";
                 }
 
