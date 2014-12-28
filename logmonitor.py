@@ -132,7 +132,8 @@ class Logmonitor(threading.Thread):
                 log('[%d] Creating rule %d' % (self.id, rule['id']))
                 self.rules[rule['id']] = cur.fetchone()
                 self.rules[rule['id']]['regex_compiled'] = re.compile(rule['regex'])
-                self.rules[rule['id']]['dirty'] = 0
+
+            self.rules[rule['id']]['dirty'] = 0
 
         self.rules = collections.OrderedDict(sorted(self.rules.iteritems(), key=lambda x:x[1]['priority'], reverse=True))
 
