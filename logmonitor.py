@@ -251,8 +251,22 @@ class Logmonitor(threading.Thread):
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == 'debug':
         logfile_fp = sys.stderr
+        log('[main] Starting in debug mode', priority=1)
+    else:
+        log('[main] Starting in daemon mode', priority=1)
 
-    reconnect = True
+    reconnect = False
+
+    try:
+        db = MySQLdb.connect(db_login[0], db_login[1], db_login[2], db_login[3])
+        cur = db.cursor()
+        cur.execute('UPDATE rules SET priority = 0')
+        cur.close()
+        db.commit()
+    except Exception as e:
+        log('[main] Error: %s' % (str(e),), priority=1)
+        reconnect = True
+
     monitors = {}
     last_downscaling = time.time()
 
