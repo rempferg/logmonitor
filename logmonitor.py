@@ -2,12 +2,12 @@
 
 from __future__ import print_function
 import collections
-import daemon.runner
 import datetime
 import lockfile
 import MySQLdb
 import operator
 import os
+import signal
 import re
 import threading
 import time
@@ -27,6 +27,11 @@ error_sleep = 30
 priority_decay_time = 300
 priority_decay_factor = 0.996527778
 
+
+def sigterm_handler(_signo, _stack_frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 with open(os.path.dirname(__file__) + '/.ht_dblogin', 'r') as fp:
     db_login = [l.rstrip('\n') for l in fp.readlines()]
@@ -229,77 +234,53 @@ class Logmonitor(threading.Thread):
                     time.sleep(error_sleep)
 
 
-class Logmonitor_maintainer:
-    def __init__(self, pidfile):
-        self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/null'
-        self.stderr_path = '/dev/null'
-        self.pidfile_path = pidfile
-        self.pidfile_timeout = 2
-
-    def run(self):
-        global db_login
-
-        reconnect = True
-        monitors = {}
-        last_downscaling = time.time()
-
-        while True:
-            try:
-                if reconnect:
-                    try:
-                        db.close()
-                    except:
-                        pass
-
-                    db = MySQLdb.connect(db_login[0], db_login[1], db_login[2], db_login[3])
-                    reconnect = False
-                    
-                for k in monitors.keys():
-                    #periodically downscale priority
-                    if time.time() - last_downscaling > priority_decay_time:
-                        monitors[k].downscale_priority()
-                        last_downscaling = time.time()
-
-                    if monitors[k].isAlive():
-                        monitors[k].update_data(db)
-                        monitors[k].flush_rules(db)
-                        monitors[k].update_rules(db)
-                    else:
-                        log('[main] Removing worker thread %d' % (k,), priority=1)
-                        del monitors[k]
-
-                #create new monitors if needed
-                cur = db.cursor(MySQLdb.cursors.DictCursor)
-
-                cur.execute('SELECT id FROM logfiles WHERE monitoring = 1 AND id NOT IN(%s)' % (','.join(["''"] + map(str, monitors.keys())),))
-
-                for logfile in cur:
-                    log('[main] Adding worker thread %d' % (logfile['id'],), priority=1)
-                    monitors[logfile['id']] = Logmonitor(logfile['id'], db)
-                    monitors[logfile['id']].daemon = True
-                    monitors[logfile['id']].start()
-                
-                db.commit()
-                time.sleep(sync_sleep)
-
-            except Exception as e:
-                log('[main] Error: %s' % (str(e),), priority=1)
-                reconnect = True
-                time.sleep(error_sleep)
-
-        db.close()
-
-
 if __name__ == '__main__':
-    logmonitor_maintainer = Logmonitor_maintainer(pidfile);
+    reconnect = True
+    monitors = {}
+    last_downscaling = time.time()
 
-    if len(sys.argv) == 2 and sys.argv[1] == 'debug':
-        logfile_fp = sys.stdout
-        logmonitor_maintainer.run()
-    else:
-        daemon_runner = daemon.runner.DaemonRunner(logmonitor_maintainer)
+    while True:
         try:
-            daemon_runner.do_action()
-        except lockfile.LockTimeout:
-            print('logmonitor already running')
+            if reconnect:
+                try:
+                    db.close()
+                except:
+                    pass
+
+                db = MySQLdb.connect(db_login[0], db_login[1], db_login[2], db_login[3])
+                reconnect = False
+                
+            for k in monitors.keys():
+                #periodically downscale priority
+                if time.time() - last_downscaling > priority_decay_time:
+                    monitors[k].downscale_priority()
+                    last_downscaling = time.time()
+
+                if monitors[k].isAlive():
+                    monitors[k].update_data(db)
+                    monitors[k].flush_rules(db)
+                    monitors[k].update_rules(db)
+                else:
+                    log('[main] Removing worker thread %d' % (k,), priority=1)
+                    del monitors[k]
+
+            #create new monitors if needed
+            cur = db.cursor(MySQLdb.cursors.DictCursor)
+
+            cur.execute('SELECT id FROM logfiles WHERE monitoring = 1 AND id NOT IN(%s)' % (','.join(["''"] + map(str, monitors.keys())),))
+
+            for logfile in cur:
+                log('[main] Adding worker thread %d' % (logfile['id'],), priority=1)
+                monitors[logfile['id']] = Logmonitor(logfile['id'], db)
+                monitors[logfile['id']].daemon = True
+                monitors[logfile['id']].start()
+            
+            db.commit()
+            time.sleep(sync_sleep)
+
+        except Exception as e:
+            log('[main] Error: %s' % (str(e),), priority=1)
+            reconnect = True
+            time.sleep(error_sleep)
+
+    db.close()
