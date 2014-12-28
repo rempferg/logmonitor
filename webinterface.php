@@ -201,43 +201,6 @@
             
             @media only screen and (orientation: portrait)
             {
-                body
-                {
-                    font-size: 40pt;
-                }
-
-                .active
-                {
-                    zoom:4.9;
-                }
-
-                .rules
-                {
-                    height:1.7em;
-                    min-height:1.7em;
-                    padding-top:0.7em;
-                }
-            
-                .seen
-                {
-                    font-size:0.4em;
-                }
-
-                .offenders
-                {
-                    top:4.1em;
-                }
-
-                .offender
-                {
-                    margin-top:0.1em;
-                    margin-left:1%;
-                }
-
-                .line
-                {
-                    font-size:0.6em;
-                }
             }
         </style>
         <script type="text/javascript">
