@@ -18,8 +18,6 @@ import sys
 loglevel = 1 #0=all, 1=less
 log_path = '/var/log/logmonitor.log'
 
-pidfile = '/var/run/logmonitor.pid'
-
 poll_sleep = 5
 sync_sleep = 10
 error_sleep = 30
