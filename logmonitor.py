@@ -191,57 +191,57 @@ class Logmonitor(threading.Thread):
 
                 line = self.log.readline()
 
-                if len(line) == 0:
-                    if os.path.isfile(self.path):
-                        if os.fstat(self.log.fileno()).st_ino != os.stat(self.path).st_ino or \
-                           os.fstat(self.log.fileno()).st_dev != os.stat(self.path).st_dev:
-                            log('[%d] Opening new logfile %s' % (self.id, self.path))
-                            self.log.close()
-                            self.log = open(self.path, 'r' )
-                            continue
+                try:
+                    if reconnect:
+                        try:
+                            db_thread.close()
+                        except:
+                            pass
+
+                        db_thread = MySQLdb.connect(db_login[0], db_login[1], db_login[2], db_login[3])
+                        reconnect = False
+
+                    if len(line) == 0:
+                        if os.path.isfile(self.path):
+                            if os.fstat(self.log.fileno()).st_ino != os.stat(self.path).st_ino or \
+                               os.fstat(self.log.fileno()).st_dev != os.stat(self.path).st_dev:
+                                log('[%d] Opening new logfile %s' % (self.id, self.path))
+                                self.log.close()
+                                self.log = open(self.path, 'r' )
+                                continue
+                        else:
+                            log('[%d] Logfile %s doesn\'t exist' % (self.id, self.path), priority=1)
+                        
+                        db_thread.commit()
+                        time.sleep(poll_sleep)
                     else:
-                        log('[%d] Logfile %s doesn\'t exist' % (self.id, self.path), priority=1)
+                            #match rules
+                            match = False
 
-                    db_thread.commit()
-                    time.sleep(poll_sleep)
-                else:
-                    try:
-                        if reconnect:
-                            try:
-                                db_thread.close()
-                            except:
-                                pass
+                            for rule in self.rules.iteritems():
+                                if rule[1]['regex_compiled'].match(line) is not None:
+                                    rule[1]['priority'] += 1.0
+                                    rule[1]['last_usage'] = datetime.datetime.now()
+                                    rule[1]['dirty'] = 1
+                                    
+                                #    if rule[1]['id'] == 43 and 'phpmyadmin' in line:
+                                #        log('[%d] MATCH rule %d: %s\n%s\n' % (self.id, rule[1]['id'], rule[1]['regex'], line))
 
-                            db_thread = MySQLdb.connect(db_login[0], db_login[1], db_login[2], db_login[3])
-                            reconnect = False
+                                    match = True
+                                    break
+                                #else:
+                                #    if rule[1]['id'] == 43 and 'phpmyadmin' in line:
+                                #        log('[%d] MISMATCH rule %d: %s\n%s\n' % (self.id, rule[1]['id'], rule[1]['regex'], line))
 
-                        #match rules
-                        match = False
+                            if not match:
+                                cur_thread = db_thread.cursor()
+                                cur_thread.execute('INSERT INTO offenders(logfile_id, line) values(%s, %s)', (self.id, line))
+                                cur_thread.close()
 
-                        for rule in self.rules.iteritems():
-                            if rule[1]['regex_compiled'].match(line) is not None:
-                                rule[1]['priority'] += 1.0
-                                rule[1]['last_usage'] = datetime.datetime.now()
-                                rule[1]['dirty'] = 1
-                                
-                            #    if rule[1]['id'] == 43 and 'phpmyadmin' in line:
-                            #        log('[%d] MATCH rule %d: %s\n%s\n' % (self.id, rule[1]['id'], rule[1]['regex'], line))
-
-                                match = True
-                                break
-                            #else:
-                            #    if rule[1]['id'] == 43 and 'phpmyadmin' in line:
-                            #        log('[%d] MISMATCH rule %d: %s\n%s\n' % (self.id, rule[1]['id'], rule[1]['regex'], line))
-
-                        if not match:
-                            cur_thread = db_thread.cursor()
-                            cur_thread.execute('INSERT INTO offenders(logfile_id, line) values(%s, %s)', (self.id, line))
-                            cur_thread.close()
-
-                    except Exception as e:
-                        log('[%d] Error: %s' % (self.id, str(e)), priority=1)
-                        reconnect = True
-                        time.sleep(error_sleep)
+                except Exception as e:
+                    log('[%d] Error: %s' % (self.id, str(e)), priority=1)
+                    reconnect = True
+                    time.sleep(error_sleep)
 
         except Exception as e:
             log('[%d] Error: %s' % (self.id, str(e)), priority=1)
