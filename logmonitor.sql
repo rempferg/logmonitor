@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `logfiles` (
 CREATE TABLE IF NOT EXISTS `offenders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `logfile_id` int(11) NOT NULL,
-  `line` varchar(1000) NOT NULL,
+  `line` varchar(2500) NOT NULL,
   `seen` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
