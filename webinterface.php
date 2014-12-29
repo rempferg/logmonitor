@@ -81,6 +81,7 @@
 <html>
     <head>
         <title>Logmonitor</title>
+        <meta name="viewport" content="initial-scale=1">
         <style>
             body
             {
@@ -197,10 +198,6 @@
             {
                 margin:0;
                 padding:0;
-            }
-            
-            @media only screen and (orientation: portrait)
-            {
             }
         </style>
         <script type="text/javascript">
