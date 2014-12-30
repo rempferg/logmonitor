@@ -104,7 +104,8 @@
     if(!$offenders = $db->query("SELECT id, line, seen FROM offenders WHERE logfile_id = {$_GET['logfile']} ORDER BY id DESC limit 0,{$batchsize}"))
         die('ERROR: ' . $db->error);
 
-    $first_offender_id = $offenders->fetch_assoc()['id'];
+    $first_offender_id = $offenders->fetch_assoc();
+    $first_offender_id = $first_offender_id['id'];
     $offenders->data_seek(0);
 ?>
 <!DOCTYPE html>
