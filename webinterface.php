@@ -1,4 +1,6 @@
 <?php
+    $batchsize = 100;
+
     $db_login = array_map('rtrim', file('.ht_dblogin'), array_fill(0, 4, "\n"));
     $db = new mysqli($db_login[0], $db_login[1], $db_login[2], $db_login[3]);
 
@@ -76,6 +78,34 @@
         header("location: {$_SERVER['PHP_SELF']}?logfile={$_GET['logfile']}");
         die();
     }
+
+    if(isset($_GET['batch']))
+    {
+        $_GET['batch'] = (int) $_GET['batch'];
+        $_GET['first_id'] = (int) $_GET['first_id'];
+
+        if(!$offenders = $db->query("SELECT id, line, seen FROM offenders WHERE logfile_id = {$_GET['logfile']} AND id <= {$_GET['first_id']} ORDER BY id DESC LIMIT " . ($_GET['batch']*$batchsize) . ",{$batchsize}"))
+            die();
+
+        while($offender = $offenders->fetch_assoc())
+        {
+            echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
+            echo "<div id=\"seen{$offender['id']}\" class=\"seen\">{$offender['seen']}</div>\n";
+            echo "<div id=\"line{$offender['id']}\" class=\"line\"><pre>";
+            echo htmlspecialchars($offender['line']);
+            echo "</pre></div>\n";
+            echo "</div></a>\n";
+        }
+
+        $offenders->close();
+        die();
+    }
+
+    if(!$offenders = $db->query("SELECT id, line, seen FROM offenders WHERE logfile_id = {$_GET['logfile']} ORDER BY id DESC limit 0,{$batchsize}"))
+        die('ERROR: ' . $db->error);
+
+    $first_offender_id = $offenders->fetch_assoc()['id'];
+    $offenders->data_seek(0);
 ?>
 <!DOCTYPE html>
 <html>
@@ -87,10 +117,10 @@
             {
                 margin:0;
                 padding:0;
-                font-family: sans-serif;
-                font-size: 12pt;
-                font-weight: normal;
-                color: black;
+                font-family:sans-serif;
+                font-size:12pt;
+                font-weight:normal;
+                color:black;
             }
 
             .button_big
@@ -428,9 +458,40 @@
                 regexnew.selectionStart = start;
                 regexnew.selectionEnd = start + replacement.length;
             }
+
+            var batch = 1;
+            var loading = false;
+
+            function more_logfile()
+            {
+                loading = true;
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function()
+                    {
+                        if(xmlhttp.readyState == 4 && xmlhttp.status == 200)
+                        {
+                            document.getElementById('offenders').insertAdjacentHTML('beforeend', xmlhttp.responseText);
+                            batch++;
+                            loading = false;
+                        }
+                    }
+
+                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=<?=$_GET['logfile']?>&first_id=<?=$first_offender_id?>&batch=" + batch;
+                xmlhttp.open("GET", url, true);
+                xmlhttp.send();
+            }
+
+            function scroll()
+            {
+                var pos = document.body.scrollTop + window.innerHeight;
+                var page_length = document.body.scrollHeight;
+
+                if(pos > page_length - window.innerHeight && !loading)
+                    more_logfile();
+            }
         </script>
     </head>
-    <body onload="document.getElementById('regexnew').focus()">
+    <body onscroll="scroll()" onload="document.getElementById('regexnew').focus()">
         <div class="box" style="position:fixed; top:0; height:2em; background-color:#f00; box-shadow:0 0 1em #000; z-index:300">
             <?php
                 if(!$logfiles = $db->query('SELECT logfiles.id AS id, path, monitoring, COUNT(offenders.id) AS num_offenders FROM logfiles LEFT OUTER JOIN offenders ON logfiles.id = offenders.logfile_id GROUP BY logfiles.id ORDER BY monitoring DESC, num_offenders DESC'))
@@ -506,17 +567,12 @@
                     echo "</div>\n";
                 }
 
-                echo '</select>';
-                echo "\n";
-
+                echo "</select>\n";
                 $rules->close();
             ?>
         </div>
-        <div class="offenders">
+        <div id="offenders" class="offenders">
             <?php
-                if(!$offenders = $db->query("SELECT id, line, seen FROM offenders WHERE logfile_id = {$_GET['logfile']} ORDER BY id DESC"))
-                    die('ERROR: ' . $db->error);
-
                 while($offender = $offenders->fetch_assoc())
                 {
                     echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
@@ -526,9 +582,6 @@
                     echo "</pre></div>\n";
                     echo "</div></a>\n";
                 }
-
-                echo '</select>';
-                echo "\n";
 
                 $offenders->close();
                 $db->close();
