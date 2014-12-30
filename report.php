@@ -8,7 +8,7 @@
         exit();
     }
 
-    if(!$stats = $db->query('SELECT logfiles.id as id, path, COUNT(offenders.id) AS num_offenders FROM offenders, logfiles WHERE logfiles.id = offenders.logfile_id AND timestampdiff(HOUR, NOW(), seen) <= 24 GROUP BY id ORDER BY num_offenders DESC'))
+    if(!$stats = $db->query('SELECT logfiles.id as id, path, COUNT(offenders.id) AS num_offenders FROM offenders, logfiles WHERE logfiles.id = offenders.logfile_id AND timestampdiff(HOUR, seen, NOW()) <= 24 GROUP BY id ORDER BY num_offenders DESC'))
         die('ERROR: ' . $db->error);
 
     while($stat = $stats->fetch_assoc())
