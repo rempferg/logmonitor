@@ -528,7 +528,7 @@
                     else
                         $last_seen = 0;
 
-                    $num_new = $db->query('SELECT COUNT(*) AS num_new FROM offenders WHERE seen >= "' . date('Y-m-d H:i:s', $last_seen) . '"');
+                    $num_new = $db->query("SELECT COUNT(*) AS num_new FROM offenders WHERE logfile_id = {$logfile['id']} AND seen >= '" . date('Y-m-d H:i:s', $last_seen) . "'");
                     $num_new = $num_new->fetch_assoc();
                     $logfile['num_new'] = $num_new['num_new'];
 
