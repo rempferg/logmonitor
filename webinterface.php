@@ -12,6 +12,13 @@
 
     $_GET['logfile'] = (int) $_GET['logfile'];
 
+    setcookie($_GET['logfile'], time(), time() + (86400 * 3650), "/");
+
+    if(!isset($_COOKIE[$_GET['logfile']]))
+        $_COOKIE[$_GET['logfile']] = 0;
+    else
+        $_COOKIE[$_GET['logfile']] = (int) $_COOKIE[$_GET['logfile']];
+
     if(isset($_GET['save_rule']))
     {
         $_GET['active'] = (int) $_GET['active'];
@@ -83,13 +90,19 @@
     {
         $_GET['batch'] = (int) $_GET['batch'];
         $_GET['first_id'] = (int) $_GET['first_id'];
+        $_GET['seen'] = (int) $_GET['seen'];
 
         if(!$offenders = $db->query("SELECT id, line, seen FROM offenders WHERE logfile_id = {$_GET['logfile']} AND id <= {$_GET['first_id']} ORDER BY id DESC LIMIT " . ($_GET['batch']*$batchsize) . ",{$batchsize}"))
             die();
 
         while($offender = $offenders->fetch_assoc())
         {
-            echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
+            if($_GET['seen'] < strtotime($offender['seen']))
+                $class = 'offender_new';
+            else
+                $class = 'offender';
+
+            echo "<div id=\"offender{$offender['id']}\" class=\"{$class}\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
             echo "<div id=\"seen{$offender['id']}\" class=\"seen\">{$offender['seen']}</div>\n";
             echo "<div id=\"line{$offender['id']}\" class=\"line\"><pre>";
             echo htmlspecialchars($offender['line']);
@@ -212,6 +225,13 @@
             {
                 margin-top:0.2em;
                 margin-left:1%;
+            }
+
+            .offender_new
+            {
+                margin-top:0.2em;
+                margin-left:1%;
+                color:#00a;
             }
 
             .seen
@@ -477,7 +497,7 @@
                         }
                     }
 
-                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=<?=$_GET['logfile']?>&first_id=<?=$first_offender_id?>&batch=" + batch;
+                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=<?=$_GET['logfile']?>&first_id=<?=$first_offender_id?>&seen=<?=$_COOKIE[$_GET['logfile']]?>&batch=" + batch;
                 xmlhttp.open("GET", url, true);
                 xmlhttp.send();
             }
@@ -495,7 +515,7 @@
     <body onscroll="scroll()" onload="document.getElementById('regexnew').focus()">
         <div class="box" style="position:fixed; top:0; height:2em; background-color:#f00; box-shadow:0 0 1em #000; z-index:300">
             <?php
-                if(!$logfiles = $db->query('SELECT logfiles.id AS id, path, monitoring, COUNT(offenders.id) AS num_offenders FROM logfiles LEFT OUTER JOIN offenders ON logfiles.id = offenders.logfile_id GROUP BY logfiles.id ORDER BY monitoring DESC, num_offenders DESC'))
+                if(!$logfiles = $db->query('SELECT logfiles.id AS id, path, monitoring FROM logfiles LEFT OUTER JOIN offenders ON logfiles.id = offenders.logfile_id GROUP BY logfiles.id ORDER BY monitoring DESC, path ASC'))
                     die('ERROR: ' . $db->error);
 
                 echo "<select id=\"logfile\"class=\"button_big\" style=\"width:calc(100% - 8em)\" size=\"1\" onchange=\"select_logfile(this.value)\" onclick=\"if(this.options.length == 1) select_logfile(this.value)\">\n";
@@ -503,6 +523,15 @@
 
                 while($logfile = $logfiles->fetch_assoc())
                 {
+                    if(isset($_COOKIE[$logfile['id']]))
+                        $last_seen = (int) $_COOKIE[$logfile['id']];
+                    else
+                        $last_seen = 0;
+
+                    $num_new = $db->query('SELECT COUNT(*) AS num_new FROM offenders WHERE seen >= "' . date('Y-m-d H:i:s', $last_seen) . '"');
+                    $num_new = $num_new->fetch_assoc();
+                    $logfile['num_new'] = $num_new['num_new'];
+
                     if($logfile['id'] == $_GET['logfile'])
                     {
                         $selected = ' selected="selected"';
@@ -521,7 +550,7 @@
                     else
                         $grey = ' style="color:#888"';
 
-                    echo "<option value=\"{$logfile['id']}\"{$selected}{$grey}> {$logfile['path']} ({$logfile['num_offenders']})\n";
+                    echo "<option value=\"{$logfile['id']}\"{$selected}{$grey}> {$logfile['path']} ({$logfile['num_new']})\n";
                 }
 
                 echo "</select>\n";
@@ -576,7 +605,12 @@
             <?php
                 while($offender = $offenders->fetch_assoc())
                 {
-                    echo "<div id=\"offender{$offender['id']}\" class=\"offender\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
+                    if($_COOKIE[$_GET['logfile']] < strtotime($offender['seen']))
+                        $class = 'offender_new';
+                    else
+                        $class = 'offender';
+
+                    echo "<div id=\"offender{$offender['id']}\" class=\"{$class}\" onclick=\"construct_regex(document.getElementById('line{$offender['id']}').innerText)\">\n";
                     echo "<div id=\"seen{$offender['id']}\" class=\"seen\">{$offender['seen']}</div>\n";
                     echo "<div id=\"line{$offender['id']}\" class=\"line\"><pre>";
                     echo htmlspecialchars($offender['line']);
