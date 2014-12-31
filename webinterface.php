@@ -245,6 +245,11 @@
                 font-size:0.8em;
             }
 
+            .nomatch
+            {
+                color:#888;
+            }
+
             pre
             {
                 margin:0;
@@ -264,9 +269,9 @@
                 for(var i = 0; i < elements.length; i++)
                 {
                     if(regex.test(elements[i].innerText))
-                        elements[i].parentNode.style.color = '#000';
+                        elements[i].parentNode.classList.remove('nomatch');
                     else
-                        elements[i].parentNode.style.color = '#888';
+                        elements[i].parentNode.classList.add('nomatch');
                 }
 
                 return false;
@@ -375,7 +380,7 @@
                 var elements = document.getElementsByClassName('line');
 
                 for(var i = 0; i < elements.length; i++)
-                    elements[i].parentNode.style.color = '#000';
+                    elements[i].parentNode.classList.remove('nomatch');
             }
 
             function select_logfile(choice)
@@ -550,7 +555,7 @@
                     else
                         $grey = ' style="color:#888"';
 
-                    echo "<option value=\"{$logfile['id']}\"{$selected}{$grey}> {$logfile['path']} ({$logfile['num_new']})\n";
+                    echo "<option value=\"{$logfile['id']}\"{$selected}{$grey}> {$logfile['num_new']} {$logfile['path']}\n";
                 }
 
                 echo "</select>\n";
