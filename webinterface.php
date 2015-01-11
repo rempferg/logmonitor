@@ -12,12 +12,28 @@
 
     $_GET['logfile'] = (int) $_GET['logfile'];
 
-    setcookie($_GET['logfile'], time(), time() + (86400 * 3650), "/");
+    $current_timestamp = time();
+    setcookie($_GET['logfile'], $current_timestamp, $current_timestamp + (86400 * 3650), "/");
 
     if(!isset($_COOKIE[$_GET['logfile']]))
-        $_COOKIE[$_GET['logfile']] = 0;
+        $logfile_last_access = 0;
     else
-        $_COOKIE[$_GET['logfile']] = (int) $_COOKIE[$_GET['logfile']];
+        $logfile_last_access = (int) $_COOKIE[$_GET['logfile']];
+
+    if(isset($_SERVER['PHP_AUTH_USER']) && $_SERVER['PHP_AUTH_USER'] != '')
+    {
+        $quoted_username = addslashes($_SERVER['PHP_AUTH_USER']);
+        $db_last_access = $db->query("SELECT timestamp FROM last_accesses WHERE username = \"{$quoted_username}\" AND logfile_id = {$_GET['logfile']}");
+
+        if($db_last_access->num_rows == 0)
+            $db->query("INSERT INTO last_accesses(username, logfile_id, timestamp) values(\"{$quoted_username}\", {$_GET['logfile']}, {$current_timestamp})");
+        else
+        {
+            $db_last_access = $db_last_access->fetch_assoc();
+            $logfile_last_access = $db_last_access['timestamp'];
+            $db->query("UPDATE last_accesses SET timestamp = {$current_timestamp} WHERE logfile_id = {$_GET['logfile']}");
+        }
+    }
 
     if(isset($_GET['save_rule']))
     {
@@ -502,7 +518,7 @@
                         }
                     }
 
-                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=<?=$_GET['logfile']?>&first_id=<?=$first_offender_id?>&seen=<?=$_COOKIE[$_GET['logfile']]?>&batch=" + batch;
+                var url = "<?=$_SERVER['PHP_SELF']?>?logfile=<?=$_GET['logfile']?>&first_id=<?=$first_offender_id?>&seen=<?=$logfile_last_access?>&batch=" + batch;
                 xmlhttp.open("GET", url, true);
                 xmlhttp.send();
             }
@@ -528,10 +544,21 @@
 
                 while($logfile = $logfiles->fetch_assoc())
                 {
-                    if(isset($_COOKIE[$logfile['id']]))
-                        $last_seen = (int) $_COOKIE[$logfile['id']];
-                    else
+                    if(!isset($_COOKIE[$logfile['id']]))
                         $last_seen = 0;
+                    else
+                        $last_seen = (int) $_COOKIE[$logfile['id']];
+
+                    if(isset($quoted_username))
+                    {
+                        $db_last_seen = $db->query("SELECT timestamp FROM last_accesses WHERE username = \"{$quoted_username}\" AND logfile_id = {$logfile['id']}");
+
+                        if($db_last_seen->num_rows != 0)
+                        {
+                            $last_seen = $db_last_seen->fetch_assoc();
+                            $last_seen = $last_seen['timestamp'];
+                        }
+                    }
 
                     $num_new = $db->query("SELECT COUNT(*) AS num_new FROM offenders WHERE logfile_id = {$logfile['id']} AND seen >= '" . date('Y-m-d H:i:s', $last_seen) . "'");
                     $num_new = $num_new->fetch_assoc();
@@ -610,7 +637,7 @@
             <?php
                 while($offender = $offenders->fetch_assoc())
                 {
-                    if($_COOKIE[$_GET['logfile']] < strtotime($offender['seen']))
+                    if($logfile_last_access < strtotime($offender['seen']))
                         $class = 'offender_new';
                     else
                         $class = 'offender';
